@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="mapex">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../mapex" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../mapex/MapExLib/src" />
+    </SOURCES>
+  </library>
+</component>
