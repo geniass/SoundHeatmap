@@ -24,6 +24,6 @@ public class Decibels {
     }
 
     public void addToAverage(double db) {
-        this.db = this.db + ((db - this.db) / (num + 1));
+        this.db = this.db * (num / (num + 1)) + (db / (num + 1));
     }
 }
