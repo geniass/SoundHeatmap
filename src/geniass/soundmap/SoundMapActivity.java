@@ -3,25 +3,28 @@ package geniass.soundmap;
 import android.app.Activity;
 import android.content.Context;
 import android.location.*;
+import android.net.http.AndroidHttpClient;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,8 +65,9 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
     protected void onResume() {
         super.onResume();
         locationManager.addGpsStatusListener(this);
-        locationManager.requestLocationUpdates(20, 0, criteria, this, null);    //blocking for now
+        locationManager.requestLocationUpdates(20, 0, criteria, this, null);
         micInput.start();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Log.d(TAG, "onResume");
     }
 
@@ -73,8 +77,8 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
         locationManager.removeGpsStatusListener(this);
         locationManager.removeUpdates(this);
         micInput.stop();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Log.d(TAG, "onPause");
-        Log.d(TAG, String.valueOf(coordinateDecibelsHashMap.size()));
     }
 
     /**
@@ -95,10 +99,9 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
             public void onClick(View view) {
                 Log.d("SoundmapJSON", getDecibelHashmapAsJson().toString());
                 try {
-                    makeJSONPostRequest("http://soundmap.herokuapp.com/data", getDecibelHashmapAsJson().toString()).toString();
+                    new PostDataTask().execute(getDecibelHashmapAsJson().toString());
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.e("SoundmapJSON", e.getMessage());
                 }
 
             }
@@ -109,8 +112,6 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         micInput = new MicrophoneInput(this);
-
-        //locationManager.requestSingleUpdate(criteria, this, null);
     }
 
     @Override
@@ -172,7 +173,7 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
         }
     }
 
-    public JSONArray getDecibelHashmapAsJson() {
+    public JSONObject getDecibelHashmapAsJson() {
         JSONArray array = new JSONArray();
 
         Iterator iter = coordinateDecibelsHashMap.entrySet().iterator();
@@ -184,7 +185,7 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
             try {
                 coord.put("lat", ((LatLng) pair.getKey()).latitude);
                 coord.put("lon", ((LatLng) pair.getKey()).longitude);
-                coord.put("dB", ((Decibels) pair.getValue()).getDb());
+                coord.put("db", ((Decibels) pair.getValue()).getDb());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -192,22 +193,13 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
             array.put(coord);
         }
 
-        return array;
-    }
-
-    public HttpResponse makeJSONPostRequest(String path, String json) throws Exception {
-        DefaultHttpClient http = new DefaultHttpClient();
-        HttpPost post = new HttpPost(path);
-        StringEntity se = new StringEntity(json);
-
-        post.setEntity(se);
-        post.setHeader("Accept", "application/json");
-        post.setHeader("Content-type", "application/json");
-
-        ResponseHandler handler = new BasicResponseHandler();
-        HttpResponse response = (HttpResponse) http.execute(post, handler);
-        Log.d(TAG, response.toString());
-        return response;
+        JSONObject object = new JSONObject();
+        try {
+            object.put("coords", array);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return object;
     }
 
     @Override
@@ -228,5 +220,51 @@ public class SoundMapActivity extends Activity implements MicrophoneInputListene
     @Override
     public void onProviderDisabled(String s) {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    String convertStreamToString(java.io.InputStream is) {
+        try {
+            return new java.util.Scanner(is).useDelimiter("\\A").next();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    class PostDataTask extends AsyncTask<String, Void, HttpResponse> {
+
+        String url = "http://soundmap.herokuapp.com/data";
+        AndroidHttpClient http = AndroidHttpClient.newInstance("");
+
+        protected HttpResponse doInBackground(String... json) {
+            try {
+                HttpPost post = new HttpPost(url);
+                StringEntity se = new StringEntity(json[0]);
+                post.setEntity(se);
+                post.setHeader("Accept", "application/json");
+                post.setHeader("Content-type", "application/json");
+                return http.execute(post);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            } finally {
+                http.close();
+            }
+        }
+
+        protected void onPostExecute(HttpResponse response) {
+            if (response != null) {
+                try {
+                    String response_text =           convertStreamToString(response.getEntity().getContent());
+                    Log.d(TAG, response_text);
+                    Toast.makeText(getApplicationContext(), response_text, Toast.LENGTH_LONG).show();
+                } catch (IOException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+            else{
+                 Toast.makeText(getApplicationContext(), "It probably worked but response is null", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

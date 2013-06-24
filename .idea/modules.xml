@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/SoundMap.iml" filepath="$PROJECT_DIR$/SoundMap.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/google_play_services/samples/auth/auth.iml" filepath="$PROJECT_DIR$/libs/google_play_services/samples/auth/auth.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/google_play_services/libproject/google-play-services_lib/google-play-services_lib.iml" filepath="$PROJECT_DIR$/libs/google_play_services/libproject/google-play-services_lib/google-play-services_lib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/google_play_services/google_play_services.iml" filepath="$PROJECT_DIR$/libs/google_play_services/google_play_services.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/google_play_services/samples/maps/maps.iml" filepath="$PROJECT_DIR$/libs/google_play_services/samples/maps/maps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/google_play_services/samples/panorama/panorama.iml" filepath="$PROJECT_DIR$/libs/google_play_services/samples/panorama/panorama.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/google_play_services/samples/plus/plus.iml" filepath="$PROJECT_DIR$/libs/google_play_services/samples/plus/plus.iml" />
+    </modules>
+  </component>
+</project>
+
